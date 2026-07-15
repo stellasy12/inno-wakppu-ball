@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>이노션 왁뿌볼 — 진짜처럼 뿌셔지는 스트레스 해소기</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Dohyeon&family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+
+  :root{
+    --hi: #eaffb0;
+    --mid: #8fd331;
+    --low: #3f7d12;
+    --shadow: #153006;
+    --glow: rgba(143,211,49,0.22);
+    --bg: #ffffff;
+    --panel: #ffffff;
+    --panel-line: #e7e8e2;
+    --panel-soft: #f7f8f4;
+    --ink: #1b1d17;
+    --muted: #8c9184;
+    --rose: #ef4d68;
+    --gold: #d9970c;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{
+    margin:0; padding:0; min-height:100%; background:var(--bg); color:var(--ink);
+    font-family:'Noto Sans KR',sans-serif; user-select:none; touch-action:manipulation;
+  }
+  .page{ min-height:100vh; display:flex; flex-direction:column; }
+  .layout{ flex:1; display:flex; flex-direction:row; align-items:flex-start; max-width:1180px; width:100%; margin:0 auto; }
+
+  .stage{
+    position:relative; flex:1 1 auto; min-height:100vh; min-width:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background: var(--bg);
+  }
+  .stage.shake{ animation: shake 320ms ease; }
+  @keyframes shake{
+    10%{ transform:translate(-3px,2px); } 30%{ transform:translate(3px,-2px); }
+    50%{ transform:translate(-2px,-3px); } 70%{ transform:translate(2px,3px); }
+    90%{ transform:translate(-1px,1px); } 100%{ transform:translate(0,0); }
+  }
+
+  .settings-col{
+    width:360px; flex:0 0 360px; min-height:100vh; border-left:1px solid var(--panel-line);
+    padding:26px 22px 30px; display:flex; flex-direction:column; overflow-y:auto;
+  }
+
+  @media (max-width: 900px){
+    .layout{ flex-direction:column; }
+    .stage{ flex: none; min-height:100vh; }
+    .settings-col{ width:100%; flex:none; min-height:auto; border-left:none; border-top:1px solid var(--panel-line); }
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{ position:absolute; top:18px; left:0; right:0; display:flex; justify-content:center; z-index:20; }
+  .modeswitch{
+    display:flex; background:var(--panel-soft); border:1px solid var(--panel-line);
+    border-radius:999px; padding:4px; gap:2px;
+  }
+  .modeswitch button{
+    font-family:'Noto Sans KR',sans-serif; font-weight:700; font-size:12px; letter-spacing:0.3px;
+    padding:8px 18px; border-radius:999px; border:none; background:transparent; color:var(--muted);
+    cursor:pointer; transition:all 0.2s ease;
+  }
+  .modeswitch button.active{ background:var(--ink); color:#ffffff; box-shadow:0 4px 14px rgba(0,0,0,0.18); }
+
+  .rank-btn{
+    position:absolute; top:18px; right:16px; z-index:20;
+    background:var(--panel-soft); border:1px solid var(--panel-line); color:var(--ink);
+    font-family:'Noto Sans KR',sans-serif; font-weight:700; font-size:12px;
+    padding:9px 14px; border-radius:999px; cursor:pointer;
+  }
+
+  .rank-row{ display:flex; align-items:center; gap:8px; padding:9px 4px; border-bottom:1px solid var(--panel-line); font-size:13px; }
+  .rank-medal{ width:26px; font-weight:700; text-align:center; flex-shrink:0; }
+  .rank-name{ flex:1; font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rank-score{ font-weight:800; color:var(--gold); font-family:'Black Han Sans',sans-serif; }
+
+  /* ---------- HUD (score/combo) ---------- */
+  .hud{
+    position:absolute; top:16px; left:16px; z-index:20;
+    display:flex; flex-direction:column; gap:6px;
+    opacity:1; transition:opacity 0.3s ease;
+  }
+  .hud.hidden{ opacity:0; pointer-events:none; }
+  .hud-pill{
+    background:var(--panel-soft); border:1px solid var(--panel-line);
+    border-radius:14px; padding:7px 12px; display:flex; align-items:baseline; gap:6px; min-width:118px;
+  }
+  .hud-pill .lbl{ font-size:9px; font-weight:700; letter-spacing:1px; color:var(--muted); text-transform:uppercase; }
+  .hud-pill .val{ font-family:'Black Han Sans',sans-serif; font-size:17px; color:var(--ink); margin-left:auto; }
+  #comboPill .val{ color:var(--rose); transition:transform 0.12s ease; }
+  #scorePill .val{ color:var(--gold); }
+
+  /* ---------- ball area ---------- */
+  .arena{ position:relative; width:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; padding:70px 20px 30px; }
+
+  .nametag{
+    position:relative; z-index:6; margin-bottom:12px;
+    font-family:'Dohyeon', sans-serif; font-size:14px; letter-spacing:0.5px;
+    color:#ffffff; background:var(--ink); border:2px solid var(--mid);
+    padding:6px 16px; border-radius:999px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 0 10px var(--glow);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+
+  .bubble{
+    position:relative; z-index:6; max-width:78vw; width:max-content; max-width:280px;
+    background:var(--ink); color:#ffffff; border:1px solid var(--ink);
+    padding:10px 16px; border-radius:16px; font-size:13px; font-weight:700; text-align:center;
+    margin-bottom:18px; box-shadow:0 10px 26px rgba(20,22,16,0.12);
+    transition: transform 0.1s ease-out;
+  }
+  .bubble::after{
+    content:''; position:absolute; bottom:-7px; left:50%; transform:translateX(-50%);
+    border-width:7px 7px 0; border-style:solid; border-color:var(--ink) transparent;
+  }
+
+  .ball-shadow{
+    position:absolute; bottom:6%; width:56%; height:9%; left:50%; transform:translateX(-50%);
+    background:radial-gradient(ellipse at center, rgba(30,32,24,0.16) 0%, rgba(30,32,24,0) 72%);
+    filter:blur(2px); z-index:0; transition:opacity 0.4s ease, width 0.3s ease, height 0.3s ease;
+  }
+
+  .ball-wrap{
+    position:relative; width:min(66vw,320px); height:min(66vw,320px);
+    display:flex; align-items:center; justify-content:center;
+    animation: float 4.4s ease-in-out infinite;
+  }
+  .ball-wrap.no-float{ animation:none; }
+  @keyframes float{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-9px);} }
+
+  .nub{
+    position:absolute; top:-3%; left:50%; width:13%; height:13%; z-index:5;
+    transform:translateX(-50%) rotate(-8deg);
+    background:radial-gradient(circle at 35% 30%, #ffffff, #dfe8c9 55%, #a9bd85 100%);
+    border-radius:45% 45% 50% 50% / 55% 55% 45% 45%;
+    box-shadow:inset -2px -3px 4px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.28);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .nub.knot-big{
+    width:22%; height:22%; top:-8%;
+    border-radius:40% 40% 55% 55% / 60% 60% 40% 40%;
+  }
+
+  .nub-side{
+    position:absolute; top:50%; width:8%; height:8%; z-index:5;
+    background:radial-gradient(circle at 35% 30%, #ffffff, #dfe8c9 55%, #a9bd85 100%);
+    border-radius:45% 45% 50% 50% / 55% 55% 45% 45%;
+    box-shadow:inset -2px -3px 4px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.28);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity:0;
+  }
+  .nub-side.left{ left:-1%; transform:translateY(-50%) rotate(82deg) scale(0); }
+  .nub-side.right{ right:-1%; transform:translateY(-50%) rotate(-82deg) scale(0); }
+
+  .ball{
+    position:relative; width:88%; height:88%; border-radius:50%; cursor:pointer;
+    background: radial-gradient(circle at 34% 27%, var(--hi) 0%, var(--mid) 35%, var(--low) 74%, var(--shadow) 100%);
+    box-shadow:
+      inset -18px -22px 42px rgba(0,0,0,0.4),
+      inset 14px 16px 28px rgba(255,255,255,0.2),
+      0 22px 46px rgba(20,25,15,0.22),
+      0 0 60px var(--glow);
+    transition: transform 90ms ease-out, background 0.6s ease, box-shadow 0.6s ease, border-radius 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), width 0.4s ease, height 0.4s ease;
+    overflow:hidden;
+  }
+  .ball.squish{ transform:scale(0.94,0.96); }
+  .ball.squashing{ transition: transform 55ms linear; }
+  .ball.shattering{ background:transparent !important; box-shadow:none !important; }
+  .ball.pop-in{ transition: transform 400ms cubic-bezier(.3,1.4,.4,1) !important; }
+  .ball.anticipate{ transition: transform 120ms cubic-bezier(.4,0,.6,1) !important; }
+
+  .specular{
+    position:absolute; width:34%; height:20%; top:13%; left:18%; pointer-events:none;
+    background:radial-gradient(ellipse at center, rgba(255,255,255,0.9), rgba(255,255,255,0) 70%);
+    filter:blur(1px); transition:transform 140ms ease-out; z-index:3;
+  }
+
+  svg.overlay{ position:absolute; inset:0; width:100%; height:100%; overflow:hidden; z-index:2; pointer-events:none; }
+  .crack-shadow{ stroke:rgba(0,0,0,0.4); stroke-width:3.2; fill:none; stroke-linecap:round; }
+  .crack-line{ stroke:#ffffff; stroke-width:1.6; fill:none; stroke-linecap:round; opacity:0.95; }
+  .face-shadow{ fill:rgba(0,0,0,0.55); }
+  .face-main{ fill:#182014; }
+
+  .ripple{
+    position:absolute; width:8px; height:8px; border-radius:50%; z-index:4;
+    border:2px solid rgba(255,255,255,0.7); transform:translate(-50%,-50%);
+    pointer-events:none; animation: ripple-anim 550ms ease-out forwards;
+  }
+  @keyframes ripple-anim{ to{ width:170px; height:170px; border-color:rgba(255,255,255,0);} }
+
+  .shard{
+    position:absolute; inset:0; opacity:0; z-index:7;
+    background: radial-gradient(circle at 34% 27%, var(--hi) 0%, var(--mid) 35%, var(--low) 74%, var(--shadow) 100%);
+    transition: transform 640ms cubic-bezier(.18,.7,.3,1), opacity 640ms ease-out, border-radius 0.4s ease;
+  }
+  .shard.fly{ opacity:1; }
+
+  .popup{
+    position:absolute; z-index:8; pointer-events:none;
+    font-family:'Black Han Sans',sans-serif; font-size:15px; color:var(--gold);
+    text-shadow:0 1px 2px rgba(0,0,0,0.15);
+    transform:translate(-50%,-50%);
+    animation: popup-float 800ms ease-out forwards;
+  }
+  .popup.big{ font-size:19px; color:var(--rose); }
+  @keyframes popup-float{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(0.6); }
+    20%{ opacity:1; transform:translate(-50%,-70%) scale(1.15); }
+    100%{ opacity:0; transform:translate(-50%,-140%) scale(1); }
+  }
+
+  .tool-icon{
+    position:absolute; z-index:9; pointer-events:none; font-size:22px;
+    transform:translate(-50%,-50%) scale(0.6) rotate(-20deg);
+    animation: tool-pop 460ms ease-out forwards;
+  }
+  @keyframes tool-pop{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(0.4) rotate(-30deg); }
+    35%{ opacity:1; transform:translate(-50%,-60%) scale(1.2) rotate(12deg); }
+    100%{ opacity:0; transform:translate(-50%,-95%) scale(0.9) rotate(0deg); }
+  }
+
+  .tool-cursor{
+    position:fixed; z-index:60; pointer-events:none; font-size:27px;
+    transform:translate(-50%,-50%) rotate(-18deg);
+    filter:drop-shadow(0 3px 4px rgba(0,0,0,0.25));
+    display:none;
+  }
+
+  .progress-wrap{
+    position:relative; z-index:6; width:190px; height:5px; margin-top:22px;
+    background:var(--panel-line); border-radius:999px; overflow:hidden;
+  }
+  .progress-bar{ height:100%; width:0%; background:linear-gradient(90deg, var(--low), var(--mid)); transition:width 200ms ease-out; }
+
+  .hint{ position:relative; z-index:6; margin-top:14px; font-size:12px; color:var(--muted); text-align:center; max-width:80vw; }
+
+  /* ---------- inline settings (collapsible, visible by default) ---------- */
+  .settings-panel{
+    width:100%; margin:0 0 16px; background:var(--panel);
+    border:1px solid var(--panel-line); border-radius:20px; overflow:hidden;
+  }
+  .settings-panel summary{
+    list-style:none; cursor:pointer; padding:16px 18px; display:flex; align-items:center;
+    justify-content:space-between; font-weight:700; font-size:13px; color:var(--ink);
+    background:var(--panel-soft);
+  }
+  .settings-panel summary::-webkit-details-marker{ display:none; }
+  .summary-label{ display:flex; align-items:center; gap:8px; }
+  .chev{ transition:transform 0.25s ease; color:var(--muted); font-size:12px; }
+  .settings-panel[open] .chev{ transform:rotate(180deg); }
+
+  .settings-body{ padding:18px 18px 22px; }
+  .settings-body .sub{ font-size:11px; color:var(--muted); margin:0 0 18px; }
+
+  .field{ margin-bottom:20px; }
+  .field label{ display:block; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--low); margin-bottom:8px; }
+  .field input[type=text]{
+    width:100%; background:var(--panel-soft); border:1px solid var(--panel-line); border-radius:10px;
+    color:var(--ink); padding:10px 12px; font-size:13px; font-family:'Noto Sans KR',sans-serif; outline:none;
+  }
+  .field input[type=text]:focus{ border-color:var(--mid); }
+
+  .name-field input[type=text]{ border:2px solid var(--mid); background:#fff; font-weight:700; }
+  .field-hint{ font-size:10px; color:var(--muted); margin:6px 2px 0; }
+
+  .mode-squish-only{ display:none; }
+  .settings-col.mode-squish .mode-pop-only{ display:none; }
+  .settings-col.mode-squish .mode-squish-only{ display:block; }
+
+  .chip-row{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .chip{
+    font-size:10px; background:var(--panel-soft); border:1px solid var(--panel-line); color:var(--muted);
+    padding:5px 10px; border-radius:999px; cursor:pointer;
+  }
+  .chip:hover{ color:var(--ink); border-color:var(--mid); }
+
+  .grid4{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .grid2{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+
+  .opt-card{
+    background:var(--panel-soft); border:1px solid var(--panel-line); border-radius:12px; padding:10px 6px;
+    text-align:center; cursor:pointer; transition:all 0.15s ease;
+  }
+  .opt-card.active{ border-color:var(--mid); background:rgba(143,211,49,0.12); }
+  .opt-card .ic{ font-size:19px; display:block; margin-bottom:4px; }
+  .opt-card .lb{ font-size:9px; color:var(--muted); font-weight:700; }
+  .opt-card.active .lb{ color:var(--ink); }
+
+  .swatch{
+    width:100%; height:34px; border-radius:999px; margin-bottom:6px;
+    border:2px solid transparent;
+  }
+  .opt-card.active .swatch{ border-color:var(--ink); }
+
+  .foot-credit{ text-align:center; font-size:11px; color:var(--muted); padding:0 20px 34px; }
+
+  /* ---------- result card ---------- */
+  .result-scrim{
+    position:fixed; inset:0; background:rgba(20,22,16,0.45); backdrop-filter:blur(4px);
+    z-index:40; display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.3s ease;
+  }
+  .result-scrim.show{ opacity:1; pointer-events:auto; }
+  .result-card{
+    width:min(88vw,340px); background:#ffffff; border:1px solid var(--panel-line); border-radius:22px;
+    padding:26px 22px 22px; text-align:center; transform:scale(0.85) translateY(10px); transition:transform 0.3s cubic-bezier(.2,.8,.3,1);
+    box-shadow:0 30px 70px rgba(20,22,16,0.25);
+  }
+  .result-scrim.show .result-card{ transform:scale(1) translateY(0); }
+  .result-card .tag{ font-size:10px; letter-spacing:2px; color:var(--low); font-weight:700; text-transform:uppercase; }
+  .result-card h3{ font-family:'Black Han Sans',sans-serif; font-size:24px; margin:8px 0 2px; color:var(--ink); }
+  .result-card .grade{ font-size:12px; color:var(--muted); margin-bottom:16px; }
+  .stat-row{ display:flex; justify-content:space-between; font-size:12px; padding:8px 0; border-bottom:1px solid var(--panel-line); }
+  .stat-row span:first-child{ color:var(--muted); }
+  .stat-row span:last-child{ font-weight:700; color:var(--ink); }
+  .result-actions{ display:flex; gap:8px; margin-top:18px; }
+  .result-actions button{
+    flex:1; padding:12px; border-radius:12px; border:none; font-weight:700; font-size:13px; cursor:pointer;
+    font-family:'Noto Sans KR',sans-serif;
+  }
+  .btn-primary{ background:var(--ink); color:#ffffff; }
+  .btn-secondary{ background:var(--panel-soft); color:var(--ink); border:1px solid var(--panel-line); }
+
+  .confetti-piece{
+    position:fixed; top:-24px; z-index:45; pointer-events:none; will-change:transform,opacity;
+    animation: confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall{
+    0%{ transform:translate(0,0) rotate(0deg); opacity:1; }
+    85%{ opacity:1; }
+    100%{ transform:translate(var(--drift,0px),108vh) rotate(var(--spin,540deg)); opacity:0; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .ball-wrap{ animation:none; }
+    .shard.fly, .popup, .ripple{ animation:none !important; transition:none !important; }
+    .confetti-piece{ display:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+<div class="layout">
+<div class="stage" id="stage">
+
+  <div class="topbar">
+    <div class="modeswitch">
+      <button id="modeBtnPop" class="active" onclick="setMode('pop')">왁뿌볼</button>
+      <button id="modeBtnSquish" onclick="setMode('squish')">말랑이</button>
+    </div>
+  </div>
+
+  <button class="rank-btn" id="soundBtn" onclick="toggleSound()" style="right:96px;">🔊</button>
+  <button class="rank-btn" onclick="openLeaderboard()">🏆 랭킹</button>
+
+  <div class="hud" id="hud">
+    <div class="hud-pill" id="scorePill"><span class="lbl">Score</span><span class="val" id="scoreVal">0</span></div>
+    <div class="hud-pill" id="comboPill"><span class="lbl">Combo</span><span class="val" id="comboVal">0</span></div>
+  </div>
+
+  <div class="arena">
+    <div class="nametag" id="nametag">광고주</div>
+    <div class="bubble" id="bubble">주말까지 피드백 반영본 부탁드려요 ☺️</div>
+
+    <div class="ball-wrap" id="ballWrap">
+      <div class="ball-shadow" id="ballShadow"></div>
+      <div class="nub" id="nub"></div>
+      <div class="nub-side left" id="nubLeft"></div>
+      <div class="nub-side right" id="nubRight"></div>
+      <div class="ball" id="ball">
+        <div class="specular" id="specular"></div>
+        <svg class="overlay" id="overlaySvg" viewBox="0 0 300 300"></svg>
+      </div>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="hint" id="hintText">손가락으로 톡톡 두드려서 금을 내고, 빠르게 연타할수록 콤보 점수가 올라가요</div>
+  </div>
+</div>
+
+<aside class="settings-col" id="settingsCol">
+<details class="settings-panel mode-pop-only" id="settingsPanel" open>
+  <summary>
+    <span class="summary-label">⚙️ 왁뿌볼 커스텀 설정</span>
+    <span class="chev">▾</span>
+  </summary>
+  <div class="settings-body">
+    <p class="sub">누구를 뿌실지 골라보세요 · 눌러서 접을 수 있어요</p>
+
+    <div class="field">
+      <label>타겟 프리셋</label>
+      <div class="grid2">
+        <div class="opt-card" data-preset="client" onclick="applyPreset('client')"><span class="ic">🧑‍💼</span><span class="lb">광고주</span></div>
+        <div class="opt-card" data-preset="lead" onclick="applyPreset('lead')"><span class="ic">👨‍🚀</span><span class="lb">팀장님</span></div>
+        <div class="opt-card" data-preset="mate" onclick="applyPreset('mate')"><span class="ic">🧑‍🤝‍🧑</span><span class="lb">동료 팀원</span></div>
+        <div class="opt-card" data-preset="self" onclick="applyPreset('self')"><span class="ic">☕</span><span class="lb">나 자신</span></div>
+      </div>
+    </div>
+
+    <div class="field name-field">
+      <label>✏️ 볼 위에 새길 이름 (최대 8자)</label>
+      <input type="text" id="nameInput" maxlength="8" value="광고주" oninput="onNameInput()" placeholder="예: 김대리">
+      <p class="field-hint">입력하는 즉시 왁뿌볼 위 이름표에 바로 반영돼요</p>
+    </div>
+
+    <div class="field">
+      <label>말풍선 멘트</label>
+      <input type="text" id="speechInputField" maxlength="30" value="주말까지 피드백 반영본 부탁드려요 ☺️" oninput="onSpeechInput()">
+      <div class="chip-row">
+        <span class="chip" onclick="setSpeechChip('조금만 더 트렌디하게!')">#트렌디하게</span>
+        <span class="chip" onclick="setSpeechChip('1차 시안이 제일 낫던데요')">#1차롤백</span>
+        <span class="chip" onclick="setSpeechChip('내일 아침까지 부탁해요')">#내일까지</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>표정</label>
+      <div class="grid4">
+        <div class="opt-card" data-exp="cute" onclick="setExpression('cute')"><span class="ic">🙂</span><span class="lb">귀여운</span></div>
+        <div class="opt-card" data-exp="angry" onclick="setExpression('angry')"><span class="ic">😠</span><span class="lb">투덜이</span></div>
+        <div class="opt-card" data-exp="sad" onclick="setExpression('sad')"><span class="ic">🥲</span><span class="lb">울먹</span></div>
+        <div class="opt-card" data-exp="happy" onclick="setExpression('happy')"><span class="ic">😊</span><span class="lb">해맑음</span></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>왁스 맛 (색상)</label>
+      <div class="grid4">
+        <div class="opt-card" data-theme="melon" onclick="setTheme('melon')"><div class="swatch" style="background:linear-gradient(135deg,#eaffb0,#3f7d12)"></div><span class="lb">멜론</span></div>
+        <div class="opt-card" data-theme="gold" onclick="setTheme('gold')"><div class="swatch" style="background:linear-gradient(135deg,#fff4d1,#5c3d09)"></div><span class="lb">골드</span></div>
+        <div class="opt-card" data-theme="berry" onclick="setTheme('berry')"><div class="swatch" style="background:linear-gradient(135deg,#ffe3f7,#6a2570)"></div><span class="lb">베리</span></div>
+        <div class="opt-card" data-theme="mint" onclick="setTheme('mint')"><div class="swatch" style="background:linear-gradient(135deg,#ffffff,#4fae8f)"></div><span class="lb">민트</span></div>
+        <div class="opt-card" data-theme="orange" onclick="setTheme('orange')"><div class="swatch" style="background:linear-gradient(135deg,#ffd1b3,#bf520d)"></div><span class="lb">오렌지</span></div>
+        <div class="opt-card" data-theme="grape" onclick="setTheme('grape')"><div class="swatch" style="background:linear-gradient(135deg,#ebd6ff,#8a2be2)"></div><span class="lb">포도</span></div>
+        <div class="opt-card" data-theme="soda" onclick="setTheme('soda')"><div class="swatch" style="background:linear-gradient(135deg,#e3f7ff,#00a2ff)"></div><span class="lb">소다</span></div>
+        <div class="opt-card" data-theme="choco" onclick="setTheme('choco')"><div class="swatch" style="background:linear-gradient(135deg,#f5ebd6,#7c5135)"></div><span class="lb">초코</span></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>타격 도구</label>
+      <div class="grid4">
+        <div class="opt-card" data-tool="hand" onclick="setTool('hand')"><span class="ic">✋</span><span class="lb">맨손</span></div>
+        <div class="opt-card" data-tool="hammer" onclick="setTool('hammer')"><span class="ic">🔨</span><span class="lb">해머</span></div>
+        <div class="opt-card" data-tool="resignation" onclick="setTool('resignation')"><span class="ic">📄</span><span class="lb">사직서</span></div>
+        <div class="opt-card" data-tool="keynote" onclick="setTool('keynote')"><span class="ic">💻</span><span class="lb">최종.key</span></div>
+      </div>
+    </div>
+  </div>
+</details>
+
+<details class="settings-panel mode-squish-only" id="squishSettingsPanel" open>
+  <summary>
+    <span class="summary-label">⚙️ 말랑이 커스텀 설정</span>
+    <span class="chev">▾</span>
+  </summary>
+  <div class="settings-body">
+    <p class="sub">왁뿌볼 설정과는 별개로 저장돼요 · 눌러서 접을 수 있어요</p>
+
+    <div class="field name-field">
+      <label>✏️ 볼 위에 새길 이름 (최대 8자)</label>
+      <input type="text" id="squishNameInput" maxlength="8" value="말랑이" oninput="onSquishNameInput()" placeholder="예: 말랑이">
+      <p class="field-hint">입력하는 즉시 볼 위 이름표에 바로 반영돼요</p>
+    </div>
+
+    <div class="field">
+      <label>🧬 말랑이 바디 모양 (벤치마크 고유 매칭)</label>
+      <div class="grid4">
+        <div class="opt-card" data-shape="circle" onclick="setShape('circle')"><span class="ic">🟡</span><span class="lb">동글이</span></div>
+        <div class="opt-card" data-shape="potato" onclick="setShape('potato')"><span class="ic">🥔</span><span class="lb">감자빵</span></div>
+        <div class="opt-card" data-shape="lemon" onclick="setShape('lemon')"><span class="ic">🥚</span><span class="lb">계란</span></div>
+        <div class="opt-card" data-shape="dumpling" onclick="setShape('dumpling')"><span class="ic">🥟</span><span class="lb">말랑만두</span></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>표정</label>
+      <div class="grid4">
+        <div class="opt-card" data-exp="cute" onclick="setExpression('cute')"><span class="ic">🙂</span><span class="lb">귀여운</span></div>
+        <div class="opt-card" data-exp="angry" onclick="setExpression('angry')"><span class="ic">😠</span><span class="lb">투덜이</span></div>
+        <div class="opt-card" data-exp="sad" onclick="setExpression('sad')"><span class="ic">🥲</span><span class="lb">울먹</span></div>
+        <div class="opt-card" data-exp="happy" onclick="setExpression('happy')"><span class="ic">😊</span><span class="lb">해맑음</span></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>왁스 맛 (색상)</label>
+      <div class="grid4">
+        <div class="opt-card" data-theme="melon" onclick="setTheme('melon')"><div class="swatch" style="background:linear-gradient(135deg,#eaffb0,#3f7d12)"></div><span class="lb">멜론</span></div>
+        <div class="opt-card" data-theme="gold" onclick="setTheme('gold')"><div class="swatch" style="background:linear-gradient(135deg,#fff4d1,#5c3d09)"></div><span class="lb">골드</span></div>
+        <div class="opt-card" data-theme="berry" onclick="setTheme('berry')"><div class="swatch" style="background:linear-gradient(135deg,#ffe3f7,#6a2570)"></div><span class="lb">베리</span></div>
+        <div class="opt-card" data-theme="mint" onclick="setTheme('mint')"><div class="swatch" style="background:linear-gradient(135deg,#ffffff,#4fae8f)"></div><span class="lb">민트</span></div>
+        <div class="opt-card" data-theme="orange" onclick="setTheme('orange')"><div class="swatch" style="background:linear-gradient(135deg,#ffd1b3,#bf520d)"></div><span class="lb">오렌지</span></div>
+        <div class="opt-card" data-theme="grape" onclick="setTheme('grape')"><div class="swatch" style="background:linear-gradient(135deg,#ebd6ff,#8a2be2)"></div><span class="lb">포도</span></div>
+        <div class="opt-card" data-theme="soda" onclick="setTheme('soda')"><div class="swatch" style="background:linear-gradient(135deg,#e3f7ff,#00a2ff)"></div><span class="lb">소다</span></div>
+        <div class="opt-card" data-theme="choco" onclick="setTheme('choco')"><div class="swatch" style="background:linear-gradient(135deg,#f5ebd6,#7c5135)"></div><span class="lb">초코</span></div>
+      </div>
+    </div>
+  </div>
+</details>
+
+<div class="foot-credit">이노션 바이브코딩 챌린지 · 실감형 스트레스 해소 도구</div>
+</aside>
+
+
+</div>
+</div>
+
+<div class="tool-cursor" id="toolCursor">✋</div>
+
+<div class="result-scrim" id="resultScrim">
+  <div class="result-card">
+    <div class="tag">완파 리포트</div>
+    <h3 id="resTarget">광고주</h3>
+    <div class="grade" id="resGrade">S급 · 압도적인 파쇄력</div>
+    <div class="stat-row"><span>소요 시간</span><span id="resTime">0.00초</span></div>
+    <div class="stat-row"><span>획득 점수</span><span id="resScore">0 pt</span></div>
+    <div class="stat-row"><span>최고 콤보</span><span id="resCombo">0 combo</span></div>
+
+    <div class="field" style="text-align:left; margin-top:16px; margin-bottom:8px;">
+      <label>랭킹 등록 닉네임</label>
+      <input type="text" id="rankNameInput" maxlength="10" placeholder="닉네임을 입력하세요">
+    </div>
+    <button class="btn-primary" id="rankSubmitBtn" style="width:100%;" onclick="submitToLeaderboard()">🏆 실시간 랭킹에 등록하기</button>
+    <p class="field-hint" style="text-align:center; margin-top:8px;">등록한 닉네임과 점수는 다른 참가자에게도 공개돼요</p>
+
+    <div class="result-actions">
+      <button class="btn-secondary" onclick="copyResult(event)">결과 복사</button>
+      <button class="btn-secondary" onclick="closeResultAndRestart()">다시 뿌시기</button>
+    </div>
+  </div>
+</div>
+
+<div class="result-scrim" id="leaderboardScrim">
+  <div class="result-card">
+    <div class="tag">실시간 랭킹</div>
+    <h3>🏆 왁뿌볼 명예의 전당</h3>
+    <div class="grade">참가자들의 최고 점수 TOP 10</div>
+    <div id="leaderboardList" style="text-align:left; max-height:280px; overflow-y:auto;"></div>
+    <div class="result-actions">
+      <button class="btn-primary" style="width:100%;" onclick="closeLeaderboard()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ================= THEME, PRESET & SHAPE DATA =================
+  const THEMES = {
+    melon:  { hi:'#eaffb0', mid:'#8fd331', low:'#3f7d12', shadow:'#153006', glow:'rgba(158,255,90,0.35)' },
+    gold:   { hi:'#fff4d1', mid:'#e0a92e', low:'#5c3d09', shadow:'#1c1204', glow:'rgba(255,200,60,0.30)' },
+    berry:  { hi:'#ffe3f7', mid:'#d46bd0', low:'#6a2570', shadow:'#230a26', glow:'rgba(255,120,230,0.30)' },
+    mint:   { hi:'#ffffff', mid:'#7fd9bd', low:'#2f7d63', shadow:'#0d241c', glow:'rgba(140,255,220,0.30)' },
+    orange: { hi:'#ffd1b3', mid:'#bf520d', low:'#612501', shadow:'#1a0a00', glow:'rgba(255,150,80,0.30)' },
+    grape:  { hi:'#ebd6ff', mid:'#8a2be2', low:'#410a7a', shadow:'#120026', glow:'rgba(210,130,255,0.30)' },
+    soda:   { hi:'#e3f7ff', mid:'#00a2ff', low:'#0046b3', shadow:'#001438', glow:'rgba(100,200,255,0.35)' },
+    choco:  { hi:'#f5ebd6', mid:'#7c5135', low:'#3b2111', shadow:'#140a04', glow:'rgba(180,140,110,0.22)' },
+
+    // 말랑이 벤치마크 전용 자동연동 컬러 프로필들
+    lemonYellow: { hi:'#fffdf0', mid:'#f9e88d', low:'#bfa62c', shadow:'#54480e', glow:'rgba(249,232,141,0.35)' },
+    potatoBrown: { hi:'#f4e6d4', mid:'#cbb194', low:'#8d7051', shadow:'#3c2f21', glow:'rgba(203,177,148,0.25)' }, // 더욱 부드러워진 연한 감자색
+    dumplingBun: { hi:'#ffffff', mid:'#f5eedc', low:'#ab9e87', shadow:'#403b30', glow:'rgba(245,238,220,0.25)' }
+  };
+
+  const SHAPES = {
+    circle: {
+      borderRadius: '50%',
+      width: '88%',
+      height: '88%',
+      hasNub: false,
+      shadowWidth: '56%',
+      shadowHeight: '9%'
+    },
+    potato: {
+      // 감자빵 스퀴시처럼 거의 동글동글, 아주 살짝만 울퉁불퉁
+      borderRadius: '54% 46% 52% 48% / 47% 53% 45% 55%',
+      width: '92%',
+      height: '88%',
+      hasNub: false,
+      shadowWidth: '58%',
+      shadowHeight: '10%'
+    },
+    lemon: {
+      // 꼭지 없이, 위아래로 살짝 길쭉한 부드러운 타원형 레몬(계란)
+      borderRadius: '54% 54% 48% 48% / 58% 58% 46% 46%',
+      width: '86%',
+      height: '94%',
+      hasNub: false,
+      hasSideNub: false,
+      shadowWidth: '62%',
+      shadowHeight: '9%'
+    },
+    dumpling: {
+      // 매듭 없이, 거의 동그란 몸통의 말랑만두
+      borderRadius: '50% 50% 46% 46% / 55% 55% 45% 45%',
+      width: '90%',
+      height: '87%',
+      hasNub: false,
+      shadowWidth: '58%',
+      shadowHeight: '10%'
+    }
+  };
+
+  const PRESETS = {
+    client: { name:'광고주',      speech:'주말까지 피드백 반영본 부탁드려요 ☺️', expression:'angry', theme:'melon' },
+    lead:   { name:'기획 팀장님', speech:'이노션만의 신선한 한 끗이 부족한데...', expression:'sad',   theme:'gold'  },
+    mate:   { name:'동료 팀원',   speech:'야근 파티 함께하실 분 급구합니다',    expression:'cute',  theme:'berry' },
+    self:   { name:'나 자신',     speech:'제발 이번 주말엔 좀 쉬자...',         expression:'happy', theme:'mint'  }
+  };
+
+  const REACTIONS = ['악!!','으악!','아파욧!','헉!','잠깐만요!'];
+
+  const TOOLS = {
+    hand:        { label:'맨손',      icon:'✋', mult:1.0, edgeBonus:0, squish:1.0 },
+    hammer:      { label:'해머',      icon:'🔨', mult:1.9, edgeBonus:2, squish:1.7 },
+    resignation: { label:'사직서',    icon:'📄', mult:1.35, edgeBonus:1, squish:0.9 },
+    keynote:     { label:'최종.key',  icon:'💻', mult:1.55, edgeBonus:1, squish:1.3 }
+  };
+
+  // ================= STATE =================
+  let mode = 'pop';
+  let currentPreset = 'client';
+  let currentTool = 'hand';
+  let currentShape = 'circle';
+  let ballText = PRESETS.client.name;
+  let speechText = PRESETS.client.speech;
+  let expression = PRESETS.client.expression;
+  let themeKey = PRESETS.client.theme;
+
+  // Pop mode and Squish mode keep fully independent customization.
+  const popCfg = { preset:'client', name:'광고주', speech:'주말까지 피드백 반영본 부탁드려요 ☺️', expression:'angry', theme:'melon', tool:'hand' };
+  const squishCfg = { name:'말랑이', speech:'꾹 눌러서 말랑말랑 스트레스를 풀어보세요~', expression:'cute', theme:'mint', shape:'circle' };
+
+  function saveActiveCfg(){
+    const t = mode === 'pop' ? popCfg : squishCfg;
+    t.name = ballText; t.speech = speechText; t.expression = expression; t.theme = themeKey;
+    if(mode === 'pop'){ t.tool = currentTool; t.preset = currentPreset; }
+    else { t.shape = currentShape; }
+  }
+
+  function loadCfgInto(m){
+    const t = m === 'pop' ? popCfg : squishCfg;
+    ballText = t.name; speechText = t.speech; expression = t.expression; themeKey = t.theme;
+    if(m === 'pop'){
+      currentTool = t.tool;
+      currentPreset = t.preset;
+      currentShape = 'circle';
+    } else {
+      currentShape = t.shape || 'circle';
+    }
+  }
+
+  let sites = [], cells = [], crackEdges = [];
+  let revealedCount = 0;
+  let edgesPerHit = 2;
+  let isShattering = false;
+  let roundStartTime = 0;
+
+  let totalScore = 0;
+  let combo = 0;
+  let bestCombo = 0;
+  let lastHitAt = 0;
+  const COMBO_WINDOW = 900;
+
+  const R = 130;               // ball radius in local/viewBox units
+  const CENTER = 150;          // viewBox is 300x300, center at 150,150
+
+  // ================= DOM =================
+  const ball = document.getElementById('ball');
+  const ballWrap = document.getElementById('ballWrap');
+  const ballShadow = document.getElementById('ballShadow');
+  const svg = document.getElementById('overlaySvg');
+  const specular = document.getElementById('specular');
+  const stage = document.getElementById('stage');
+  const progressBar = document.getElementById('progressBar');
+  const hud = document.getElementById('hud');
+  const toolCursor = document.getElementById('toolCursor');
+
+  // ================= AUDIO =================
+  let soundEnabled = localStorage.getItem('wakppu_sound') !== 'off';
+  window.toggleSound = function(){
+    soundEnabled = !soundEnabled;
+    localStorage.setItem('wakppu_sound', soundEnabled ? 'on' : 'off');
+    const btn = document.getElementById('soundBtn');
+    if(btn) btn.textContent = soundEnabled ? '🔊' : '🔇';
+    if(!soundEnabled) stopSquishSound();
+  };
+  let actx;
+  function ctx(){
+    if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if(actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+  function noiseBuffer(c, dur){
+    const buf = c.createBuffer(1, Math.max(1,Math.floor(c.sampleRate*dur)), c.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/d.length, 2);
+    return buf;
+  }
+
+  // 실제 ASMR 비디오의 와작 갈라지는 소리를 정밀 재현한 왁스 파쇄 오디오 엔진
+  function playPop(strength){
+    if(!soundEnabled) return;
+    const c = ctx(); const t0 = c.currentTime;
+    
+    // 1. 와작거리는 미세 파쇄 균열 클러스터 사운드
+    const crackCount = 5 + Math.floor(Math.random() * 3);
+    for(let i=0; i<crackCount; i++){
+      const delay = i * 0.007 + Math.random() * 0.006;
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      const filter = c.createBiquadFilter();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1400 + Math.random() * 900, t0 + delay);
+      osc.frequency.exponentialRampToValueAtTime(70 + Math.random() * 30, t0 + delay + 0.035);
+      
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(2800, t0 + delay);
+      filter.Q.value = 4.5;
+      
+      gain.gain.setValueAtTime(0.001, t0 + delay);
+      gain.gain.exponentialRampToValueAtTime(0.24 * strength, t0 + delay + 0.002);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + delay + 0.028);
+      
+      osc.connect(filter).connect(gain).connect(c.destination);
+      osc.start(t0 + delay);
+      osc.stop(t0 + delay + 0.04);
+    }
+
+    // 2. 왁스 벽을 건조하고 단단하게 후려치는 타격 임팩트 (Low-frequency Thud)
+    const impOsc = c.createOscillator();
+    const impGain = c.createGain();
+    const impFilter = c.createBiquadFilter();
+    
+    impOsc.type = 'sine';
+    impOsc.frequency.setValueAtTime(130, t0);
+    impOsc.frequency.exponentialRampToValueAtTime(45, t0 + 0.14);
+    
+    impFilter.type = 'lowpass';
+    impFilter.frequency.setValueAtTime(220, t0);
+    
+    impGain.gain.setValueAtTime(0.001, t0);
+    impGain.gain.exponentialRampToValueAtTime(0.42 * strength, t0 + 0.008);
+    impGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.16);
+    
+    impOsc.connect(impFilter).connect(impGain).connect(c.destination);
+    impOsc.start(t0);
+    impOsc.stop(t0 + 0.18);
+  }
+
+  // 왁뿌볼 전체가 완전히 와그작 부서지는 파괴 극대화 ASMR 사운드
+  function playShatter(){
+    if(!soundEnabled) return;
+    const c = ctx(); const t0 = c.currentTime;
+    
+    // 수많은 균열 파편들의 연쇄 음향 방출
+    for(let i=0; i<12; i++){
+      const delay = i * 0.012 + Math.random() * 0.018;
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      const f = c.createBiquadFilter();
+      
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(1900 - i * 85 + Math.random() * 140, t0 + delay);
+      osc.frequency.exponentialRampToValueAtTime(95, t0 + delay + 0.16);
+      
+      f.type = 'highpass';
+      f.frequency.setValueAtTime(1300, t0 + delay);
+      
+      g.gain.setValueAtTime(0.001, t0 + delay);
+      g.gain.exponentialRampToValueAtTime(0.19, t0 + delay + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + delay + 0.13);
+      
+      osc.connect(f).connect(g).connect(c.destination);
+      osc.start(t0 + delay);
+      osc.stop(t0 + delay + 0.18);
+    }
+    
+    // 파편 조각이 서걱거리며 흩어지는 사그락 거친 고주파 왁스 입자 마찰음
+    const nb = noiseBuffer(c, 0.42);
+    const src = c.createBufferSource();
+    src.buffer = nb;
+    
+    const filter = c.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 1900;
+    filter.Q.value = 1.1;
+    
+    const gain = c.createGain();
+    gain.gain.setValueAtTime(0.48, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.4);
+    
+    src.connect(filter).connect(gain).connect(c.destination);
+    src.start(t0);
+  }
+
+  // 말랑이 만지작거릴 때의 리얼 "뽀용 쫠깃" 점착 ASMR 사운드
+  function playSquish(){
+    if(!soundEnabled) return;
+    const c = ctx(); const t0 = c.currentTime;
+    const osc1 = c.createOscillator();
+    const osc2 = c.createOscillator();
+    const g = c.createGain();
+    const f = c.createBiquadFilter();
+    
+    // 쫀득하게 도약했다가 수축 복원되는 Rubbery 수축음
+    osc1.type = 'triangle';
+    osc1.frequency.setValueAtTime(135, t0);
+    osc1.frequency.exponentialRampToValueAtTime(390, t0 + 0.08);
+    osc1.frequency.exponentialRampToValueAtTime(185, t0 + 0.22);
+    
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(68, t0);
+    osc2.frequency.exponentialRampToValueAtTime(195, t0 + 0.08);
+    osc2.frequency.exponentialRampToValueAtTime(92, t0 + 0.22);
+    
+    f.type = 'lowpass';
+    f.frequency.setValueAtTime(650, t0);
+    f.frequency.exponentialRampToValueAtTime(1400, t0 + 0.08);
+    f.frequency.exponentialRampToValueAtTime(550, t0 + 0.22);
+    
+    g.gain.setValueAtTime(0.001, t0);
+    g.gain.linearRampToValueAtTime(0.36, t0 + 0.035);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.24);
+    
+    osc1.connect(f);
+    osc2.connect(f);
+    f.connect(g).connect(c.destination);
+    
+    osc1.start(t0); osc1.stop(t0 + 0.25);
+    osc2.start(t0); osc2.stop(t0 + 0.25);
+    
+    // 손끝 점착 시 생기는 슬라임 특유의 쫩거리는 미세 밀착 이탈음
+    const nb = noiseBuffer(c, 0.07);
+    const src = c.createBufferSource();
+    src.buffer = nb;
+    
+    const filter2 = c.createBiquadFilter();
+    filter2.type = 'bandpass';
+    filter2.frequency.value = 3100;
+    
+    const ng = c.createGain();
+    ng.gain.setValueAtTime(0.14, t0);
+    ng.gain.exponentialRampToValueAtTime(0.001, t0 + 0.06);
+    
+    src.connect(filter2).connect(ng).connect(c.destination);
+    src.start(t0);
+  }
+
+  let squishOsc = null, squishOscGain = null;
+  function startSquishSound(){
+    if(!soundEnabled) return;
+    const c = ctx();
+    squishOsc = c.createOscillator();
+    squishOscGain = c.createGain();
+    squishOsc.type = 'sine';
+    squishOsc.frequency.value = 150;
+    squishOscGain.gain.value = 0.0001;
+    squishOsc.connect(squishOscGain).connect(c.destination);
+    squishOsc.start();
+  }
+  function updateSquishSound(mag){
+    if(!squishOsc) return;
+    const c = ctx();
+    const clamped = Math.max(0, Math.min(mag, 1.3));
+    squishOsc.frequency.setTargetAtTime(150 - clamped*70, c.currentTime, 0.06);
+    squishOscGain.gain.setTargetAtTime(Math.min(0.14, 0.02 + clamped*0.14), c.currentTime, 0.06);
+  }
+  function stopSquishSound(){
+    if(!squishOsc) return;
+    const c = ctx();
+    squishOscGain.gain.setTargetAtTime(0.0001, c.currentTime, 0.09);
+    const osc = squishOsc;
+    setTimeout(()=>{ try{ osc.stop(); }catch(e){} }, 320);
+    squishOsc = null; squishOscGain = null;
+  }
+
+  function buzz(pattern){ if(navigator.vibrate){ try{ navigator.vibrate(pattern); }catch(e){} } }
+
+  // ================= VORONOI GEOMETRY =================
+  function circlePoly(radius, n){
+    const p = [];
+    for(let i=0;i<n;i++){
+      const a = (i/n)*Math.PI*2;
+      p.push({x:Math.cos(a)*radius, y:Math.sin(a)*radius});
+    }
+    return p;
+  }
+
+  function clipHalfPlane(poly, px, py, nx, ny){
+    if(poly.length === 0) return poly;
+    const out = [];
+    for(let i=0;i<poly.length;i++){
+      const cur = poly[i];
+      const prev = poly[(i-1+poly.length)%poly.length];
+      const curSide = (cur.x-px)*nx + (cur.y-py)*ny;
+      const prevSide = (prev.x-px)*nx + (prev.y-py)*ny;
+      const curIn = curSide >= -1e-7;
+      const prevIn = prevSide >= -1e-7;
+      if(curIn){
+        if(!prevIn){
+          const t = prevSide/(prevSide-curSide);
+          out.push({ x: prev.x+(cur.x-prev.x)*t, y: prev.y+(cur.y-prev.y)*t });
+        }
+        out.push(cur);
+      } else if(prevIn){
+        const t = prevSide/(prevSide-curSide);
+        out.push({ x: prev.x+(cur.x-prev.x)*t, y: prev.y+(cur.y-prev.y)*t });
+      }
+    }
+    return out;
+  }
+
+  function generateSites(n, sampleR){
+    const pts = [];
+    const minDist = sampleR * 0.34;
+    let attempts = 0;
+    while(pts.length < n && attempts < 800){
+      attempts++;
+      const rr = sampleR * Math.sqrt(Math.random());
+      const aa = Math.random()*Math.PI*2;
+      const x = Math.cos(aa)*rr, y = Math.sin(aa)*rr;
+      let ok = true;
+      for(const p of pts){ if(Math.hypot(p.x-x,p.y-y) < minDist){ ok=false; break; } }
+      if(ok) pts.push({x,y});
+    }
+    return pts;
+  }
+
+  function computeVoronoi(siteList, radius){
+    const bounding = circlePoly(radius, 44);
+    const cellPolys = siteList.map((s, i)=>{
+      let poly = bounding.slice();
+      for(let j=0;j<siteList.length;j++){
+        if(i===j) continue;
+        const o = siteList[j];
+        const mx = (s.x+o.x)/2, my = (s.y+o.y)/2;
+        let nx = s.x-o.x, ny = s.y-o.y;
+        const len = Math.hypot(nx,ny) || 1;
+        nx/=len; ny/=len;
+        poly = clipHalfPlane(poly, mx, my, nx, ny);
+        if(poly.length===0) break;
+      }
+      return poly;
+    });
+    return cellPolys;
+  }
+
+  function edgeKey(a,b){
+    const k1 = Math.round(a.x*2)+','+Math.round(a.y*2);
+    const k2 = Math.round(b.x*2)+','+Math.round(b.y*2);
+    return k1 < k2 ? k1+'|'+k2 : k2+'|'+k1;
+  }
+
+  function buildCrackEdges(cellPolys){
+    const map = new Map();
+    cellPolys.forEach(poly=>{
+      for(let i=0;i<poly.length;i++){
+        const a = poly[i], b = poly[(i+1)%poly.length];
+        const key = edgeKey(a,b);
+        if(map.has(key)){
+          map.get(key).count++;
+        } else {
+          map.set(key, {x1:a.x,y1:a.y,x2:b.x,y2:b.y, count:1, mx:(a.x+b.x)/2, my:(a.y+b.y)/2, revealed:false});
+        }
+      }
+    });
+    const edges = [];
+    map.forEach(e=>{ if(e.count>=2) edges.push(e); });
+    return edges;
+  }
+
+  // ================= BALL BUILD / RESET =================
+  function toPx(v){ return CENTER + v; }
+
+  function buildBall(){
+    sites = generateSites(16, R*0.9);
+    cells = computeVoronoi(sites, R);
+    crackEdges = buildCrackEdges(cells);
+    revealedCount = 0;
+    edgesPerHit = Math.max(1, Math.ceil(crackEdges.length / 12));
+
+    svg.innerHTML = '';
+    drawFace();
+
+    crackEdges.forEach(e=>{
+      const shadow = document.createElementNS('http://www.w3.org/2000/svg','path');
+      shadow.setAttribute('d', 'M '+toPx(e.x1)+','+toPx(e.y1)+' L '+toPx(e.x2)+','+toPx(e.y2));
+      shadow.setAttribute('class','crack-shadow');
+      shadow.style.opacity = 0;
+      svg.appendChild(shadow);
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg','path');
+      line.setAttribute('d', 'M '+toPx(e.x1)+','+toPx(e.y1)+' L '+toPx(e.x2)+','+toPx(e.y2));
+      line.setAttribute('class','crack-line');
+      svg.appendChild(line);
+      const len = line.getTotalLength();
+      line.style.strokeDasharray = len;
+      line.style.strokeDashoffset = len;
+      line.style.transition = 'stroke-dashoffset 240ms ease-out';
+      shadow.style.strokeDasharray = len;
+      shadow.style.strokeDashoffset = len;
+      shadow.style.transition = 'stroke-dashoffset 240ms ease-out, opacity 240ms ease-out';
+      e._lineEl = line; e._shadowEl = shadow;
+    });
+
+    progressBar.style.width = '0%';
+  }
+
+  function drawFace(){
+    // 감자 흙자국 부드러운 가우시안 블러 필터 정의
+    const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+    defs.innerHTML = `
+      <filter id="potatoBlur" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="16" />
+      </filter>
+    `;
+    svg.appendChild(defs);
+
+    if (mode === 'squish') {
+      if (currentShape === 'potato') {
+        // 감자빵 스퀴시의 은은한 블러쉬 자국 (동글동글해진 실루엣 기준)
+        const spotsG = document.createElementNS('http://www.w3.org/2000/svg','g');
+        spotsG.innerHTML = `
+          <circle cx="75" cy="125" r="30" fill="#c4a37b" filter="url(#potatoBlur)" opacity="0.46" />
+          <circle cx="220" cy="145" r="26" fill="#ceab83" filter="url(#potatoBlur)" opacity="0.48" />
+          <circle cx="130" cy="205" r="30" fill="#ba9972" filter="url(#potatoBlur)" opacity="0.42" />
+        `;
+        svg.appendChild(spotsG);
+
+        // 감자 표면의 섬세한 미세 반점(Micro-dots)
+        const dotsG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        let dotsHtml = '';
+        const seed = 42; 
+        function pseudoRandom(s) {
+          const x = Math.sin(s) * 10000;
+          return x - Math.floor(x);
+        }
+        for (let i = 0; i < 40; i++) {
+          const r = 100 * Math.sqrt(pseudoRandom(seed + i * 3));
+          const theta = pseudoRandom(seed + i * 7) * Math.PI * 2;
+          const cx = 150 + Math.cos(theta) * r;
+          const cy = 150 + Math.sin(theta) * r * 0.95;
+          const size = 1.2 + pseudoRandom(seed + i * 11) * 1.8;
+          const op = 0.22 + pseudoRandom(seed + i * 13) * 0.28;
+          dotsHtml += `<circle cx="${cx}" cy="${cy}" r="${size}" fill="#9c7c56" opacity="${op}" />`;
+        }
+        dotsG.innerHTML = dotsHtml;
+        svg.appendChild(dotsG);
+
+      } else if (currentShape === 'lemon') {
+        // 상단에 크림빛 하이라이트, 표면엔 레몬 특유의 자잘한 점 텍스처
+        const lemonG = document.createElementNS('http://www.w3.org/2000/svg','g');
+        lemonG.innerHTML = `
+          <ellipse cx="112" cy="88" rx="20" ry="12" fill="rgba(255,255,240,0.55)" transform="rotate(-25 112 88)" />
+          <circle cx="205" cy="112" r="4" fill="rgba(180,150,20,0.32)" />
+          <circle cx="222" cy="142" r="3" fill="rgba(180,150,20,0.28)" />
+          <circle cx="118" cy="228" r="3.5" fill="rgba(180,150,20,0.28)" />
+          <circle cx="148" cy="243" r="3" fill="rgba(180,150,20,0.26)" />
+          <circle cx="176" cy="212" r="2.6" fill="rgba(180,150,20,0.24)" />
+          <circle cx="95" cy="165" r="2.4" fill="rgba(180,150,20,0.22)" />
+        `;
+        svg.appendChild(lemonG);
+      }
+    }
+
+    // 2. 표정 레이어
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('transform', 'translate(150,150) scale(0.82)');
+    let inner = '';
+    if(expression === 'cute'){
+      inner = '<circle cx="-18" cy="-2" r="9" class="face-main"/><circle cx="18" cy="-2" r="9" class="face-main"/>'+
+              '<circle cx="-15" cy="-5" r="3.4" fill="#fff"/><circle cx="21" cy="-5" r="3.4" fill="#fff"/>'+
+              '<path d="M -8 12 Q 0 20 8 12" stroke="#182014" stroke-width="4" fill="none" stroke-linecap="round"/>';
+    } else if(expression === 'angry'){
+      inner = '<path d="M -30 -10 Q -34 -20 -24 -22 Q -14 -24 -16 -16 Q -17 -11 -23 -12" fill="none" stroke="#182014" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'+
+              '<path d="M 6 -12 L 32 -22" stroke="#182014" stroke-width="4.2" stroke-linecap="round"/>'+
+              '<path d="M 27 -25 L 34 -17" stroke="#182014" stroke-width="3.4" stroke-linecap="round"/>'+
+              '<circle cx="-20" cy="5" r="6.5" fill="#182014"/>'+
+              '<circle cx="22" cy="0" r="6.5" fill="#182014"/>'+
+              '<path d="M -16 25 Q -6 19 2 24 Q 10 29 18 23" fill="none" stroke="#182014" stroke-width="4" stroke-linecap="round"/>';
+    } else if(expression === 'sad'){
+      inner = '<circle cx="-18" cy="0" r="8.5" class="face-main"/><circle cx="18" cy="0" r="8.5" class="face-main"/>'+
+              '<circle cx="-15" cy="4" r="4.5" fill="#5fc2ec"/><circle cx="21" cy="4" r="4.5" fill="#5fc2ec"/>'+
+              '<path d="M -8 26 A 8 8 0 0 1 8 26" fill="none" stroke="#182014" stroke-width="4" stroke-linecap="round"/>';
+    } else {
+      inner = '<path d="M -24 -4 A 9 9 0 0 1 -6 -4" fill="none" stroke="#182014" stroke-width="4" stroke-linecap="round"/>'+
+              '<path d="M 6 -4 A 9 9 0 0 1 24 -4" fill="none" stroke="#182014" stroke-width="4" stroke-linecap="round"/>'+
+              '<path d="M -14 12 Q 0 26 14 12" fill="#7a1f1f" stroke="#182014" stroke-width="3" stroke-linejoin="round"/>'+
+              '<ellipse cx="-28" cy="14" rx="9" ry="5" fill="rgba(255,90,110,0.45)"/><ellipse cx="28" cy="14" rx="9" ry="5" fill="rgba(255,90,110,0.45)"/>';
+    }
+    g.innerHTML = inner;
+    svg.appendChild(g);
+
+    // 3. 고대비 물리 스티커 이름표 배경 캡슐 생성
+    const textWidth = Math.max(78, ballText.length * 14 + 20);
+    const badgeBg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    badgeBg.setAttribute('x', 150 - textWidth/2);
+    badgeBg.setAttribute('y', 48);
+    badgeBg.setAttribute('width', textWidth);
+    badgeBg.setAttribute('height', 24);
+    badgeBg.setAttribute('rx', 12);
+    badgeBg.setAttribute('fill', '#ffffff');
+    badgeBg.setAttribute('stroke', '#182014');
+    badgeBg.setAttribute('stroke-width', '3');
+    svg.appendChild(badgeBg);
+
+    // 4. Dohyeon 폰트 메인 텍스트 매칭
+    const nameMain = document.createElementNS('http://www.w3.org/2000/svg','text');
+    nameMain.setAttribute('x', 150); nameMain.setAttribute('y', 65);
+    nameMain.setAttribute('text-anchor','middle');
+    nameMain.setAttribute('font-family',"'Dohyeon', sans-serif");
+    nameMain.setAttribute('font-size','13.5');
+    nameMain.setAttribute('fill','#182014');
+    nameMain.textContent = ballText;
+    svg.appendChild(nameMain);
+  }
+
+  function revealNearest(lx, ly, count){
+    const remaining = crackEdges.filter(e=>!e.revealed);
+    remaining.sort((a,b)=>{
+      const da = (a.mx-lx)**2 + (a.my-ly)**2;
+      const db = (b.mx-lx)**2 + (b.my-ly)**2;
+      return da-db;
+    });
+    let n = 0;
+    for(const e of remaining){
+      if(n>=count) break;
+      e.revealed = true;
+      e._lineEl.style.strokeDashoffset = 0;
+      e._shadowEl.style.strokeDashoffset = 0;
+      e._shadowEl.style.opacity = 0.5;
+      revealedCount++;
+      n++;
+    }
+    progressBar.style.width = Math.min(100, (revealedCount/crackEdges.length)*100) + '%';
+  }
+
+  // ================= SHATTER =================
+  function shatterBall(){
+    isShattering = true;
+    ball.classList.add('anticipate');
+    ball.style.transform = 'scale(0.78,0.84)';
+    setTimeout(()=>{
+      ball.classList.remove('anticipate');
+      ball.style.transform = '';
+      doShatterExplosion();
+    }, 120);
+  }
+
+  function doShatterExplosion(){
+    playShatter();
+    buzz([25,40,25,40,70]);
+    stage.classList.add('shake');
+    setTimeout(()=>stage.classList.remove('shake'), 340);
+    ball.classList.add('shattering');
+
+    cells.forEach(cell=>{
+      if(cell.length < 3) return;
+      const shard = document.createElement('div');
+      shard.className = 'shard';
+      shard.style.borderRadius = SHAPES[currentShape].borderRadius;
+      const pctPts = cell.map(p=> (toPx(p.x)/300*100).toFixed(2)+'% '+(toPx(p.y)/300*100).toFixed(2)+'%');
+      shard.style.clipPath = 'polygon(' + pctPts.join(',') + ')';
+      ball.appendChild(shard);
+
+      let cx=0, cy=0;
+      cell.forEach(p=>{ cx+=p.x; cy+=p.y; });
+      cx/=cell.length; cy/=cell.length;
+      const dist = 60 + Math.random()*90;
+      const len = Math.hypot(cx,cy) || 1;
+      const dx = (cx/len)*dist + (Math.random()-0.5)*40;
+      const dy = (cy/len)*dist + (Math.random()-0.5)*40;
+      const rot = (Math.random()-0.5)*280;
+
+      requestAnimationFrame(()=>{
+        shard.classList.add('fly');
+        shard.style.transform = 'translate('+dx+'px,'+dy+'px) rotate('+rot+'deg) scale(0.65)';
+        shard.style.opacity = '0';
+      });
+    });
+
+    svg.style.transition = 'opacity 180ms ease-out';
+    svg.style.opacity = '0';
+    specular.style.opacity = '0';
+
+    const elapsed = (Date.now() - roundStartTime)/1000;
+    const clearBonus = Math.max(0, Math.round((15-elapsed)*80)) + bestCombo*20;
+    totalScore += clearBonus;
+    updateHUD();
+
+    setTimeout(()=> showResult(elapsed, clearBonus), 560);
+  }
+
+  const CONFETTI_COLORS = ['#eaffb0','#8fd331','#d9970c','#ef4d68','#00a2ff','#8a2be2','#ffffff'];
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function spawnConfetti(count){
+    if(reduceMotion) return;
+    count = count || 70;
+    const frag = document.createDocumentFragment();
+    for(let i=0; i<count; i++){
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      const size = 6 + Math.random()*7;
+      const isCircle = Math.random() < 0.4;
+      el.style.left = Math.random()*100 + 'vw';
+      el.style.width = size + 'px';
+      el.style.height = (isCircle ? size : size*2.4) + 'px';
+      el.style.background = CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)];
+      el.style.borderRadius = isCircle ? '50%' : '2px';
+      el.style.setProperty('--drift', (Math.random()*160-80) + 'px');
+      el.style.setProperty('--spin', (Math.random()*720-360) + 'deg');
+      const duration = 1.6 + Math.random()*1.2;
+      const delay = Math.random()*0.35;
+      el.style.animationDuration = duration + 's';
+      el.style.animationDelay = delay + 's';
+      frag.appendChild(el);
+      setTimeout(()=> el.remove(), (duration+delay)*1000 + 200);
+    }
+    document.body.appendChild(frag);
+  }
+
+  function showResult(elapsed, clearBonus){
+    spawnConfetti(80);
+    let grade = '평화주의자', gradeDesc = '마인드 컨트롤의 달인이시군요';
+    if(elapsed < 3) { grade='GOD급'; gradeDesc='압도적인 찰나의 파쇄력!'; }
+    else if(elapsed < 5){ grade='SSS급'; gradeDesc='흠잡을 데 없는 완벽한 타격'; }
+    else if(elapsed < 8){ grade='SS급'; gradeDesc='에이스다운 맹렬한 속도'; }
+    else if(elapsed < 13){ grade='S급'; gradeDesc='성실하고 민첩한 클리어'; }
+    else if(elapsed < 20){ grade='A급'; gradeDesc='꾸준하고 위트있는 파쇄'; }
+    else { grade='B급'; gradeDesc='정성스럽게 하나씩 부순 당신'; }
+
+    document.getElementById('resTarget').innerText = ballText;
+    document.getElementById('resGrade').innerText = grade + ' · ' + gradeDesc;
+    document.getElementById('resTime').innerText = elapsed.toFixed(2) + '초';
+    document.getElementById('resScore').innerText = totalScore.toLocaleString() + ' pt (+' + clearBonus.toLocaleString() + ')';
+    document.getElementById('resCombo').innerText = bestCombo + ' combo';
+    const rankInput = document.getElementById('rankNameInput');
+    if(!rankInput.value.trim()) rankInput.value = ballText;
+    const rankBtn = document.getElementById('rankSubmitBtn');
+    rankBtn.disabled = false;
+    rankBtn.textContent = '🏆 실시간 랭킹에 등록하기';
+    document.getElementById('resultScrim').classList.add('show');
+  }
+
+  window.closeResultAndRestart = function(){
+    document.getElementById('resultScrim').classList.remove('show');
+    restartRound();
+  };
+
+  window.copyResult = function(e){
+    const elapsedText = document.getElementById('resTime').innerText;
+    const scoreText = document.getElementById('resScore').innerText;
+    
+    // 이스케이프 문자나 /N 없이 완벽한 정렬 상태로 클립보드에 바인딩
+    const txt = `[이노션 왁뿌볼] ${ballText} 완파!
+소요시간: ${elapsedText}
+획득 점수: ${scoreText}
+최고 콤보: ${bestCombo} combo
+동료들과 스트레스를 시원하게 날려보세요 🚀`;
+
+    const ta = document.createElement('textarea');
+    ta.value = txt; 
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta); 
+    ta.select();
+    
+    try{ 
+      document.execCommand('copy'); 
+      const targetBtn = e?.target;
+      if (targetBtn) {
+        const originalText = targetBtn.textContent;
+        targetBtn.textContent = '📋 복사 완료!';
+        setTimeout(() => { targetBtn.textContent = originalText; }, 1500);
+      }
+    }catch(err){}
+    document.body.removeChild(ta);
+  };
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  const LEADERBOARD_API = '/api/leaderboard';
+
+  window.submitToLeaderboard = async function(){
+    const rankBtn = document.getElementById('rankSubmitBtn');
+    const nickname = (document.getElementById('rankNameInput').value || '').trim() || ballText || '익명';
+    rankBtn.disabled = true;
+    rankBtn.textContent = '등록 중...';
+    try{
+      const entry = { name: nickname, score: totalScore, combo: bestCombo, target: ballText, tool: currentTool };
+      const res = await fetch(LEADERBOARD_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry)
+      });
+      if(!res.ok) throw new Error('submit failed');
+      rankBtn.textContent = '✅ 등록 완료!';
+      openLeaderboard();
+    }catch(e){
+      rankBtn.textContent = '등록 실패, 다시 시도';
+      rankBtn.disabled = false;
+    }
+  };
+
+  window.openLeaderboard = async function(){
+    document.getElementById('leaderboardScrim').classList.add('show');
+    const listEl = document.getElementById('leaderboardList');
+    listEl.innerHTML = '<p style="color:var(--muted); font-size:12px; text-align:center; padding:20px 0;">불러오는 중...</p>';
+    try{
+      const res = await fetch(LEADERBOARD_API);
+      if(!res.ok) throw new Error('load failed');
+      const entries = await res.json();
+      if(!Array.isArray(entries) || entries.length === 0){
+        listEl.innerHTML = '<p style="color:var(--muted); font-size:12px; text-align:center; padding:20px 0;">아직 등록된 기록이 없어요.<br>첫 기록의 주인공이 되어보세요!</p>';
+        return;
+      }
+      const top = entries.slice(0,10);
+      listEl.innerHTML = top.map((e,i)=>{
+        const medal = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : (i+1)+'.';
+        const score = (e.score||0).toLocaleString();
+        return '<div class="rank-row"><span class="rank-medal">'+medal+'</span><span class="rank-name">'+escapeHtml(e.name||'익명')+'</span><span class="rank-score">'+score+' pt</span></div>';
+      }).join('');
+    }catch(e){
+      listEl.innerHTML = '<p style="color:var(--muted); font-size:12px; text-align:center; padding:20px 0;">랭킹을 불러오지 못했어요. 네트워크를 확인해주세요.</p>';
+    }
+  };
+
+  window.closeLeaderboard = function(){
+    document.getElementById('leaderboardScrim').classList.remove('show');
+  };
+
+  function restartRound(){
+    isShattering = false;
+    document.querySelectorAll('.shard').forEach(s=>s.remove());
+    svg.style.transition = 'none';
+    svg.style.opacity = '1';
+    specular.style.opacity = '1';
+    ball.classList.remove('shattering');
+    buildBall();
+    ball.classList.add('pop-in');
+    ball.style.transform = 'scale(0.25)';
+    requestAnimationFrame(()=> requestAnimationFrame(()=>{ ball.style.transform = 'scale(1)'; }));
+    setTimeout(()=> ball.classList.remove('pop-in'), 420);
+
+    combo = 0;
+    lastHitAt = 0;
+    roundStartTime = Date.now();
+    updateHUD();
+  }
+
+  // ================= SCORING =================
+  function updateHUD(){
+    document.getElementById('scoreVal').innerText = totalScore.toLocaleString();
+    const comboEl = document.getElementById('comboVal');
+    comboEl.innerText = combo;
+    comboEl.style.transform = 'scale(1.3)';
+    setTimeout(()=>{ comboEl.style.transform='scale(1)'; }, 130);
+  }
+
+  function registerHit(edgesJustRevealed, px, py){
+    const now = Date.now();
+    if(lastHitAt && (now-lastHitAt) <= COMBO_WINDOW) combo++; else combo = 1;
+    lastHitAt = now;
+    bestCombo = Math.max(bestCombo, combo);
+
+    const mult = 1 + Math.min(combo,20)*0.12;
+    const base = 35 + edgesJustRevealed*12;
+    const gained = Math.max(5, Math.round(base*mult*TOOLS[currentTool].mult));
+    totalScore += gained;
+    updateHUD();
+    spawnPopup(px, py, '+'+gained + (combo>1 ? '   x'+combo : ''), combo>=5);
+    buzz(Math.min(10 + combo, 35));
+  }
+
+  function spawnPopup(x,y,text,big){
+    const el = document.createElement('div');
+    el.className = 'popup' + (big?' big':'');
+    el.style.left = x+'px'; el.style.top = y+'px';
+    el.textContent = text;
+    ball.appendChild(el);
+    setTimeout(()=>el.remove(), 820);
+  }
+
+  // ================= INTERACTION: POP MODE =================
+  function spawnRipple(x,y){
+    const r = document.createElement('div');
+    r.className = 'ripple'; r.style.left=x+'px'; r.style.top=y+'px';
+    ball.appendChild(r);
+    setTimeout(()=>r.remove(), 600);
+  }
+
+  let bubbleResetTimer = null;
+  function flashReaction(){
+    if(Math.random() > 0.72){
+      const bubble = document.getElementById('bubble');
+      const original = speechText;
+      bubble.textContent = REACTIONS[Math.floor(Math.random()*REACTIONS.length)];
+      bubble.style.transform = 'scale(1.12)';
+      clearTimeout(bubbleResetTimer);
+      bubbleResetTimer = setTimeout(()=>{
+        bubble.textContent = original;
+        bubble.style.transform = 'scale(1)';
+      }, 650);
+    }
+  }
+
+  function spawnToolIcon(x,y){
+    const el = document.createElement('div');
+    el.className = 'tool-icon';
+    el.textContent = TOOLS[currentTool].icon;
+    el.style.left = x+'px'; el.style.top = y+'px';
+    ball.appendChild(el);
+    setTimeout(()=>el.remove(), 460);
+  }
+
+  function pokeSquish(px, py, rectW, rectH, intensity){
+    const cx = rectW/2, cy = rectH/2;
+    const dx = px-cx, dy = py-cy;
+    lastStretchAngle = Math.atan2(dy,dx);
+    lastStretchMag = -0.11 * intensity;
+    springReleaseTick();
+  }
+
+  function handlePopTap(e){
+    if(isShattering) return;
+    const rect = ball.getBoundingClientRect();
+    const point = e.touches ? e.touches[0] : e;
+    const px = point.clientX - rect.left;
+    const py = point.clientY - rect.top;
+    const lx = (px/rect.width)*300 - 150;
+    const ly = (py/rect.height)*300 - 150;
+
+    spawnRipple(px,py);
+    spawnToolIcon(px,py);
+    pokeSquish(px, py, rect.width, rect.height, TOOLS[currentTool].squish);
+
+    const dx = (px - rect.width/2)/(rect.width/2);
+    const dy = (py - rect.height/2)/(rect.height/2);
+    specular.style.transform = 'translate('+(dx*14)+'px,'+(dy*10)+'px)';
+    setTimeout(()=>{ specular.style.transform='translate(0,0)'; }, 250);
+
+    flashReaction();
+
+    if(revealedCount < crackEdges.length){
+      const before = revealedCount;
+      revealNearest(lx, ly, edgesPerHit + TOOLS[currentTool].edgeBonus);
+      const justRevealed = revealedCount - before;
+      playPop((0.6 + (revealedCount/crackEdges.length)*0.6) * (0.85 + TOOLS[currentTool].squish*0.2));
+      registerHit(justRevealed, px, py);
+    } else {
+      shatterBall();
+    }
+  }
+
+  // ================= INTERACTION: SQUISH MODE (jelly physics) =================
+  let squishActive = false;
+  let squishHoldStart = 0;
+  let squishStartX = 0, squishStartY = 0;
+  let squishCurX = 0, squishCurY = 0;
+  let squishRaf = null;
+  let lastStretchMag = 0, lastStretchAngle = 0;
+
+  function squishPointerMove(e){
+    squishCurX = e.clientX; squishCurY = e.clientY;
+  }
+
+  function squishTick(){
+    if(!squishActive) return;
+    const rect = ball.getBoundingClientRect();
+    const dx = squishCurX - squishStartX;
+    const dy = squishCurY - squishStartY;
+    const dragDist = Math.hypot(dx, dy);
+    const dragMag = Math.min(dragDist / (rect.width * 0.42), 1);
+    const angle = Math.atan2(dy, dx);
+    const heldRatio = Math.min((Date.now() - squishHoldStart) / 420, 1);
+
+    const stretch = 0.20 + dragMag * 0.75 + heldRatio * 0.30;
+    const squeeze = stretch * 0.86;
+
+    lastStretchMag = stretch;
+    lastStretchAngle = angle;
+
+    ball.style.transform = 'rotate('+angle+'rad) scale('+(1+stretch)+','+(1-squeeze)+') rotate('+(-angle)+'rad)';
+    updateSquishSound(dragMag + heldRatio);
+    squishRaf = requestAnimationFrame(squishTick);
+  }
+
+  function startSquish(e){
+    if(mode !== 'squish') return;
+    squishActive = true;
+    squishHoldStart = Date.now();
+    const point = e.touches ? e.touches[0] : e;
+    squishStartX = point.clientX; squishStartY = point.clientY;
+    squishCurX = squishStartX; squishCurY = squishStartY;
+    ball.classList.add('squashing');
+    window.addEventListener('pointermove', squishPointerMove);
+    startSquishSound();
+    squishTick();
+    
+    // 누르는 그 순간 촉각적 ASMR "뽀용~" 방출
+    playSquish();
+  }
+
+  function springReleaseTick(){
+    const k = 0.30, damping = 0.16;
+    let mag = lastStretchMag, vel = 0;
+    const angle = lastStretchAngle;
+    function frame(){
+      const accel = (0 - mag) * k - vel * damping;
+      vel += accel;
+      mag += vel;
+      const stretch = mag, squeeze = mag * 0.82;
+      ball.style.transform = 'rotate('+angle+'rad) scale('+(1+stretch)+','+(1-squeeze)+') rotate('+(-angle)+'rad)';
+      if(Math.abs(mag) > 0.004 || Math.abs(vel) > 0.004){
+        requestAnimationFrame(frame);
+      } else {
+        ball.style.transform = '';
+        ball.classList.remove('squashing');
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function endSquish(){
+    if(mode !== 'squish' || !squishActive) return;
+    squishActive = false;
+    cancelAnimationFrame(squishRaf);
+    window.removeEventListener('pointermove', squishPointerMove);
+    stopSquishSound();
+    playSquish();
+    buzz(20);
+    springReleaseTick();
+  }
+
+  // ================= POINTER WIRING =================
+  ball.addEventListener('pointerdown', (e)=>{
+    if(mode === 'pop') handlePopTap(e);
+    else startSquish(e);
+  });
+  window.addEventListener('pointerup', ()=>{ if(mode==='squish') endSquish(); });
+
+  function updateToolCursorIcon(){
+    toolCursor.textContent = TOOLS[currentTool].icon;
+  }
+
+  ball.addEventListener('pointermove', (e)=>{
+    if(e.pointerType && e.pointerType !== 'mouse') return;
+    if(mode !== 'pop'){ toolCursor.style.display = 'none'; return; }
+    toolCursor.style.left = e.clientX + 'px';
+    toolCursor.style.top = e.clientY + 'px';
+    toolCursor.style.display = 'block';
+    ball.style.cursor = 'none';
+  });
+  ball.addEventListener('pointerleave', (e)=>{
+    if(e.pointerType && e.pointerType !== 'mouse') return;
+    toolCursor.style.display = 'none';
+    ball.style.cursor = 'pointer';
+  });
+
+  // ================= MODE / PRESET / SETTINGS =================
+  window.applyShape = function(key){
+    currentShape = key || 'circle';
+    const s = SHAPES[currentShape];
+    ball.style.borderRadius = s.borderRadius;
+    ball.style.width = s.width;
+    ball.style.height = s.height;
+
+    if (ballShadow) {
+      ballShadow.style.width = s.shadowWidth;
+      ballShadow.style.height = s.shadowHeight;
+    }
+    
+    const nub = document.getElementById('nub');
+    if(nub) {
+      nub.classList.toggle('knot-big', !!s.knotBig);
+      if(s.hasNub) {
+        nub.style.opacity = '1';
+        nub.style.transform = 'translateX(-50%) scale(1) rotate(-8deg)';
+      } else {
+        nub.style.opacity = '0';
+        nub.style.transform = 'translateX(-50%) scale(0) rotate(-8deg)';
+      }
+    }
+
+    const nubLeft = document.getElementById('nubLeft');
+    const nubRight = document.getElementById('nubRight');
+    if(nubLeft && nubRight){
+      if(s.hasSideNub){
+        nubLeft.style.opacity = '1';
+        nubLeft.style.transform = 'translateY(-50%) rotate(82deg) scale(1)';
+        nubRight.style.opacity = '1';
+        nubRight.style.transform = 'translateY(-50%) rotate(-82deg) scale(1)';
+      } else {
+        nubLeft.style.opacity = '0';
+        nubLeft.style.transform = 'translateY(-50%) rotate(82deg) scale(0)';
+        nubRight.style.opacity = '0';
+        nubRight.style.transform = 'translateY(-50%) rotate(-82deg) scale(0)';
+      }
+    }
+
+    if (mode === 'squish') {
+      if (currentShape === 'lemon') {
+        applyTheme('lemonYellow'); 
+      } else if (currentShape === 'potato') {
+        applyTheme('potatoBrown'); 
+      } else if (currentShape === 'dumpling') {
+        applyTheme('dumplingBun'); 
+      } else {
+        applyTheme(themeKey); 
+      }
+    }
+
+    document.querySelectorAll('[data-shape]').forEach(el => {
+      el.classList.toggle('active', el.dataset.shape === currentShape);
+    });
+  };
+
+  window.setShape = function(key){
+    currentShape = key;
+    applyShape(key);
+    saveActiveCfg();
+    replaceFaceOnly();
+  };
+
+  window.setMode = function(m){
+    saveActiveCfg();
+    mode = m;
+    loadCfgInto(m);
+
+    document.getElementById('modeBtnPop').classList.toggle('active', m==='pop');
+    document.getElementById('modeBtnSquish').classList.toggle('active', m==='squish');
+    document.getElementById('settingsCol').classList.toggle('mode-squish', m==='squish');
+    hud.classList.toggle('hidden', m!=='pop');
+    document.getElementById('progressWrap').style.display = (m==='pop') ? 'block' : 'none';
+    document.getElementById('hintText').textContent = (m==='pop')
+      ? '손가락으로 톡톡 두드려서 금을 내고, 빠르게 연타할수록 콤보 점수가 올라가요'
+      : '꾹 눌러서 말랑하게 찌그러뜨려보세요. 점수는 없어요, 그냥 힐링용!';
+
+    document.getElementById('nametag').textContent = ballText;
+    document.getElementById('bubble').textContent = speechText;
+    document.getElementById('nameInput').value = popCfg.name;
+    document.getElementById('speechInputField').value = popCfg.speech;
+    document.getElementById('squishNameInput').value = squishCfg.name;
+    
+    applyTheme(themeKey);
+    applyShape(currentShape);
+    refreshOptionCards();
+    replaceFaceOnly();
+    updateToolCursorIcon();
+
+    if(m==='squish'){
+      ball.classList.add('pop-in');
+      ball.style.transform = 'scale(1,1)';
+      setTimeout(()=> ball.classList.remove('pop-in'), 420);
+      toolCursor.style.display = 'none';
+      ball.style.cursor = 'pointer';
+    } else {
+      restartRound();
+    }
+  };
+
+  function applyTheme(key){
+    const t = THEMES[key];
+    ballWrap.style.setProperty('--hi', t.hi);
+    ballWrap.style.setProperty('--mid', t.mid);
+    ballWrap.style.setProperty('--low', t.low);
+    ballWrap.style.setProperty('--shadow', t.shadow);
+    ballWrap.style.setProperty('--glow', t.glow);
+    document.documentElement.style.setProperty('--mid', t.mid);
+    document.documentElement.style.setProperty('--glow', t.glow);
+    stage.style.setProperty('--glow', t.glow);
+  }
+
+  function refreshOptionCards(){
+    document.querySelectorAll('[data-preset]').forEach(el=> el.classList.toggle('active', el.dataset.preset===currentPreset));
+    document.querySelectorAll('[data-exp]').forEach(el=> el.classList.toggle('active', el.dataset.exp===expression));
+    document.querySelectorAll('[data-theme]').forEach(el=> el.classList.toggle('active', el.dataset.theme===themeKey));
+    document.querySelectorAll('[data-tool]').forEach(el=> el.classList.toggle('active', el.dataset.tool===currentTool));
+    document.querySelectorAll('[data-shape]').forEach(el=> el.classList.toggle('active', el.dataset.shape===currentShape));
+  }
+
+  window.applyPreset = function(key){
+    currentPreset = key;
+    const p = PRESETS[key];
+    ballText = p.name;
+    speechText = p.speech;
+    expression = p.expression;
+    themeKey = p.theme;
+    document.getElementById('nameInput').value = ballText;
+    document.getElementById('speechInputField').value = speechText;
+    document.getElementById('nametag').textContent = ballText;
+    document.getElementById('bubble').textContent = speechText;
+    applyTheme(themeKey);
+    refreshOptionCards();
+    saveActiveCfg();
+    restartRound();
+  };
+
+  window.onNameInput = function(){
+    ballText = document.getElementById('nameInput').value.trim() || '이름없음';
+    document.getElementById('nametag').textContent = ballText;
+    replaceFaceOnly();
+    saveActiveCfg();
+  };
+  window.onSquishNameInput = function(){
+    ballText = document.getElementById('squishNameInput').value.trim() || '말랑이';
+    document.getElementById('nametag').textContent = ballText;
+    replaceFaceOnly();
+    saveActiveCfg();
+  };
+  window.onSpeechInput = function(){
+    speechText = document.getElementById('speechInputField').value.trim() || '...';
+    document.getElementById('bubble').textContent = speechText;
+    saveActiveCfg();
+  };
+  window.setSpeechChip = function(t){
+    document.getElementById('speechInputField').value = t;
+    onSpeechInput();
+  };
+  window.setExpression = function(exp){
+    expression = exp;
+    refreshOptionCards();
+    replaceFaceOnly();
+    saveActiveCfg();
+  };
+  window.setTheme = function(key){
+    themeKey = key;
+    applyTheme(key);
+    refreshOptionCards();
+    saveActiveCfg();
+    replaceFaceOnly();
+  };
+  window.setTool = function(key){
+    currentTool = key;
+    refreshOptionCards();
+    updateToolCursorIcon();
+    saveActiveCfg();
+  };
+
+  function replaceFaceOnly(){
+    // 인덱스 꼬임 걱정 없이 SVG 안의 기존 텍스트, 장식, 표정 그룹 엘리먼트를 확실하게 필터링하여 일괄 삭제
+    const kids = Array.from(svg.childNodes);
+    for(const k of kids){
+      if(k.tagName === 'g' || k.tagName === 'text' || k.tagName === 'rect' || k.tagName === 'defs'){
+        svg.removeChild(k);
+      }
+    }
+    drawFaceAtTop();
+  }
+
+  function drawFaceAtTop(){
+    // 깨짐 이펙트 레이어 뒤쪽으로 꼬이지 않도록, 첫 번째 crack 선 엘리먼트를 조회 후 그 앞에 안전히 밀어 넣기
+    const firstCrack = svg.querySelector('path');
+    const before = firstCrack;
+    const frag = document.createDocumentFragment();
+
+    // 감자 흙자국 부드러운 가우시안 블러 필터 정의 복원
+    const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+    defs.innerHTML = `
+      <filter id="potatoBlur" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="16" />
+      </filter>
+    `;
+    frag.appendChild(defs);
+
+    if (mode === 'squish') {
+      if (currentShape === 'potato') {
+        const spotsG = document.createElementNS('http://www.w3.org/2000/svg','g');
+        spotsG.innerHTML = `
+          <circle cx="75" cy="125" r="30" fill="#c4a37b" filter="url(#potatoBlur)" opacity="0.46" />
+          <circle cx="220" cy="145" r="26" fill="#ceab83" filter="url(#potatoBlur)" opacity="0.48" />
+          <circle cx="130" cy="205" r="30" fill="#ba9972" filter="url(#potatoBlur)" opacity="0.42" />
+        `;
+        frag.appendChild(spotsG);
+
+        const dotsG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        let dotsHtml = '';
+        const seed = 42; 
+        function pseudoRandom(s) {
+          const x = Math.sin(s) * 10000;
+          return x - Math.floor(x);
+        }
+        for (let i = 0; i < 40; i++) {
+          const r = 100 * Math.sqrt(pseudoRandom(seed + i * 3));
+          const theta = pseudoRandom(seed + i * 7) * Math.PI * 2;
+          const cx = 150 + Math.cos(theta) * r;
+          const cy = 150 + Math.sin(theta) * r * 0.95;
+          const size = 1.2 + pseudoRandom(seed + i * 11) * 1.8;
+          const op = 0.22 + pseudoRandom(seed + i * 13) * 0.28;
+          dotsHtml += `<circle cx="${cx}" cy="${cy}" r="${size}" fill="#9c7c56" opacity="${op}" />`;
+        }
+        dotsG.innerHTML = dotsHtml;
+        frag.appendChild(dotsG);
+
+      } else if (currentShape === 'lemon') {
+        const lemonG = document.createElementNS('http://www.w3.org/2000/svg','g');
+        lemonG.innerHTML = `
+          <ellipse cx="112" cy="88" rx="20" ry="12" fill="rgba(255,255,240,0.55)" transform="rotate(-25 112 88)" />
+          <circle cx="205" cy="112" r="4" fill="rgba(180,150,20,0.32)" />
+          <circle cx="222" cy="142" r="3" fill="rgba(180,150,20,0.28)" />
+          <circle cx="118" cy="228" r="3.5" fill="rgba(180,150,20,0.28)" />
+          <circle cx="148" cy="243" r="3" fill="rgba(180,150,20,0.26)" />
+          <circle cx="176" cy="212" r="2.6" fill="rgba(180,150,20,0.24)" />
+          <circle cx="95" cy="165" r="2.4" fill="rgba(180,150,20,0.22)" />
+        `;
+        frag.appendChild(lemonG);
+      }
+    }
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('transform', 'translate(150,150) scale(0.82)');
+    let inner = '';
+    if(expression === 'cute'){
+      inner = '<circle cx="-18" cy="-2" r="9" class="face-main"/><circle cx="18" cy="-2" r="9" class="face-main"/>'+
+              '<circle cx="-15" cy="-5" r="3.4" fill="#fff"/><circle cx="21" cy="-5" r="3.4" fill="#fff"/>'+
+              '<path d="M -8 12 Q 0 20 8 12" stroke="#182014" stroke-width="4" fill="none" stroke-linecap="round"/>';
+    } else if(expression === 'angry'){
+      inner = '<path d="M -30 -10 Q -34 -20 -24 -22 Q -14 -24 -16 -16 Q -17 -11 -23 -12" fill="none" stroke="#182014" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'+
+              '<path d="M 6 -12 L 32 -22" stroke="#182014" stroke-width="4.2" stroke-linecap="round"/>'+
+              '<path d="M 27 -25 L 34 -17" stroke="#182014" stroke-width="3.4" stroke-linecap="round"/>'+
+              '<circle cx="-20" cy="5" r="6.5" fill="#182014"/>'+
+              '<circle cx="22" cy="0" r="6.5" fill="#182014"/>'+
+              '<path d="M -16 25 Q -6 19 2 24 Q 10 29 18 23" fill="none" stroke="#182014" stroke-width="4" stroke-linecap="round"/>';
+    } else if(expression === 'sad'){
+      inner = '<circle cx="-18" cy="0" r="8.5" class="face-main"/><circle cx="18" cy="0" r="8.5" class="face-main"/>'+
+              '<circle cx="-15" cy="4" r="4.5" fill="#5fc2ec"/><circle cx="21" cy="4" r="4.5" fill="#5fc2ec"/>'+
+              '<path d="M -8 26 A 8 8 0 0 1 8 26" fill="none" stroke="#182014" stroke-width="4" stroke-linecap="round"/>';
+    } else {
+      inner = '<path d="M -24 -4 A 9 9 0 0 1 -6 -4" fill="none" stroke="#182014" stroke-width="4" stroke-linecap="round"/>'+
+              '<path d="M 6 -4 A 9 9 0 0 1 24 -4" fill="none" stroke="#182014" stroke-width="4" stroke-linecap="round"/>'+
+              '<path d="M -14 12 Q 0 26 14 12" fill="#7a1f1f" stroke="#182014" stroke-width="3" stroke-linejoin="round"/>'+
+              '<ellipse cx="-28" cy="14" rx="9" ry="5" fill="rgba(255,90,110,0.45)"/><ellipse cx="28" cy="14" rx="9" ry="5" fill="rgba(255,90,110,0.45)"/>';
+    }
+    g.innerHTML = inner;
+    frag.appendChild(g);
+
+    const textWidth = Math.max(78, ballText.length * 14 + 20);
+    const badgeBg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    badgeBg.setAttribute('x', 150 - textWidth/2);
+    badgeBg.setAttribute('y', 48);
+    badgeBg.setAttribute('width', textWidth);
+    badgeBg.setAttribute('height', 24);
+    badgeBg.setAttribute('rx', 12);
+    badgeBg.setAttribute('fill', '#ffffff');
+    badgeBg.setAttribute('stroke', '#182014');
+    badgeBg.setAttribute('stroke-width', '3');
+    frag.appendChild(badgeBg);
+
+    const nameMain = document.createElementNS('http://www.w3.org/2000/svg','text');
+    nameMain.setAttribute('x', 150); nameMain.setAttribute('y', 65);
+    nameMain.setAttribute('text-anchor','middle');
+    nameMain.setAttribute('font-family',"'Dohyeon', sans-serif");
+    nameMain.setAttribute('font-size','13.5');
+    nameMain.setAttribute('fill','#182014');
+    nameMain.textContent = ballText;
+    frag.appendChild(nameMain);
+
+    if (before) {
+      svg.insertBefore(frag, before);
+    } else {
+      svg.appendChild(frag);
+    }
+  }
+
+  // ================= INIT =================
+  const soundBtnInit = document.getElementById('soundBtn');
+  if(soundBtnInit) soundBtnInit.textContent = soundEnabled ? '🔊' : '🔇';
+  applyTheme(themeKey);
+  applyShape(currentShape);
+  refreshOptionCards();
+  updateToolCursorIcon();
+  buildBall();
+  roundStartTime = Date.now();
+  updateHUD();
+
+})();
+</script>
+</body>
+</html>

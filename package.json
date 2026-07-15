@@ -1,0 +1,9 @@
+{
+  "name": "wakppu-ball",
+  "version": "1.0.0",
+  "private": true,
+  "description": "이노션 왁뿌볼 — 진짜처럼 뿌셔지는 스트레스 해소기",
+  "dependencies": {
+    "@netlify/blobs": "^7.3.0"
+  }
+}
